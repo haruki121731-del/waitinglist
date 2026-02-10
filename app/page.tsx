@@ -235,7 +235,7 @@ export default function LoreAnchorLP() {
   const referralLink = "https://lore-anchor.com/join?ref=user_xyz";
   const queuePosition = 4521;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError("");
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -243,10 +243,24 @@ export default function LoreAnchorLP() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error || "登録に失敗しました。");
+        setLoading(false);
+        return;
+      }
       setLoading(false);
       setSigned(true);
-    }, 1500);
+    } catch {
+      setEmailError("通信エラーが発生しました。もう一度お試しください。");
+      setLoading(false);
+    }
   };
 
   const handleCopy = () => {
@@ -257,7 +271,7 @@ export default function LoreAnchorLP() {
 
   const shareText = encodeURIComponent(
     "自分のイラストを守るためにLore-Anchorに登録した。AIが巡回して守ってくれるらしい。招待枠あるので興味ある人はここからどうぞ👇 #LoreAnchor\n" +
-      referralLink
+    referralLink
   );
 
   return (
