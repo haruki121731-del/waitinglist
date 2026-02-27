@@ -8,16 +8,31 @@ function getSupabase() {
   );
 }
 
+export async function GET() {
+  try {
+    const supabase = getSupabase();
+    const { count } = await supabase
+      .from("waitlist")
+      .select("*", { count: "exact", head: true });
+    return NextResponse.json({ count: count ?? 0 });
+  } catch {
+    return NextResponse.json({ count: 0 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = getSupabase();
-    const { email } = await req.json();
+    const { email, ref } = await req.json();
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "無効なメールアドレスです" }, { status: 400 });
     }
 
-    const { error } = await supabase.from("waitlist").insert({ email });
+    // Insert with optional referral source
+    const { error } = await supabase
+      .from("waitlist")
+      .insert({ email, ref_source: ref ?? null });
 
     if (error) {
       if (error.code === "23505") {
